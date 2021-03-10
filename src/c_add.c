@@ -2,17 +2,32 @@
 #include <math.h>
 #include <time.h>
 
-/**
- *
- * Example/test adding function. Requires
- * length (n), and adds everything to
- * float *y (does NOT create new array!).
- *
- */
-void test_add(int n, float *x, float *y)
+float *create_host_float_array(const int LENGTH)
 {
-    for (int i = 0; i < n; i++)
-        y[i] = x[i] + y[i];
+    const int MEM_SIZE = sizeof(float) * LENGTH;
+    float *array = (float *)malloc(MEM_SIZE);
+    if (!array)
+    {
+        fprintf(stderr, "Failed to allocate array of floats on the host (CPU) with length %d and size %d; exiting...\n", LENGTH, MEM_SIZE);
+        exit(-420);
+    }
+    return array;
+}
+
+/**
+*
+* Adds two float arrays into a third array.
+* All arrays must of the same size of variable
+* LENGTH.
+*
+*/
+void add_floats_of_length(float *dest, float *src_a, float *src_b, const int LENGTH)
+{
+    for (int idx = 0; idx < LENGTH; idx++)
+    {
+        dest[idx] = src_a[idx] + src_b[idx];
+        fprintf(stdout, "%f + %f = %f", src_a[idx], src_b[idx], dest[idx]);
+    }
 }
 
 int main(void)
@@ -23,52 +38,43 @@ int main(void)
     * working at the end.
     *
     */
-    time_t seconds = time(NULL);
+    time_t start_time = time(NULL);
 
     const int ARRAY_LENGTH = 1 << 26;
-    const int ARRAY_MEM_SIZE = sizeof(float) * ARRAY_LENGTH;
-
-    /**
-    *
-    * Allocate enough memory for two arrays of
-    * size ARRAY_MEM_SIZE.
-    *
-    */
-    float *array_x = (float *)malloc(ARRAY_MEM_SIZE);
-    float *array_y = (float *)malloc(ARRAY_MEM_SIZE);
-    if (!array_x || !array_y)
-    {
-        printf("what da fak, there's no memory?! there's no memory for %d bytes?! aborting...", ARRAY_MEM_SIZE * 2);
-        return -1;
-    }
+    float *input_a = create_host_float_array(ARRAY_LENGTH);
+    float *input_b = create_host_float_array(ARRAY_LENGTH);
+    float *output = create_host_float_array(ARRAY_LENGTH);
 
     /**
     *
     * Fill both arrays with some test data, so
     * that adding each array at the same index
-    * gives the float, 3.0F.
+    * gives the float "3.0F"
     *
     */
     for (int idx = 0; idx < ARRAY_LENGTH; idx++)
     {
-        array_x[idx] = 1.0f;
-        array_y[idx] = 2.0f;
+        input_a[idx] = 1.0f;
+        input_b[idx] = 2.0f;
     }
-    test_add(ARRAY_LENGTH, array_x, array_y);
+
+    add_floats_of_length(output, input_a, input_b, ARRAY_LENGTH);
 
     /**
     *
-    * Confirm each element of array_y to be 3.0F,
+    * Confirm each element of output to be 3.0F,
     * otherwise calculate out the margin-of-error.
     *
     */
     float maxError = 0.0F;
     for (int idx = 0; idx < ARRAY_LENGTH; idx++)
-        maxError = fmax(maxError, fabs(array_y[idx] - 3.0F));
+        maxError = fmax(maxError, fabs(output[idx] - (double)3.0F));
 
-    free(array_x);
-    free(array_y);
+    fprintf(stdout, "--- END ---\nTime elapsed: %llds\nMax float computation error: %f\n--- END ---\n", time(NULL) - start_time, maxError);
 
-    printf("Time elpased: %lld; max float computation error: %f\n", time(NULL) - seconds, maxError);
+    free(input_a);
+    free(input_b);
+    free(output);
+
     return 0;
 }

@@ -71,12 +71,12 @@ void delete_device_memory(void *memory)
 *
 */
 __global__
-void add_floats_of_length(float *input_a, float *input_b, float *output, const int LENGTH)
+void add_floats_of_length(float *dest, float *src_a, float *src_b, const int LENGTH)
 {
     const int block_offset = blockDim.x * gridDim.x;
     const int thread_offset = blockIdx.x * blockDim.x + threadIdx.x;
     for (int idx = thread_offset; idx < LENGTH; idx += block_offset)
-        output[idx] = input_a[idx] + input_b[idx];
+        dest[idx] = src_a[idx] + src_b[idx];
 }
 
 int main(void)
@@ -127,7 +127,7 @@ int main(void)
     */
     const int block_size = 256;
     const int grid_size = (ARRAY_LENGTH + block_size - 1) / block_size;
-    add_floats_of_length<<<grid_size, block_size>>>(device_input_a, device_input_b, device_output, ARRAY_LENGTH);
+    add_floats_of_length<<<grid_size, block_size>>>(device_output, device_input_a, device_input_b, ARRAY_LENGTH);
     cudaError_t err = cudaGetLastError();
     if (err != cudaSuccess)
     {
