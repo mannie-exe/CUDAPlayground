@@ -83,19 +83,10 @@ int main(void)
 {
     /**
     *
-    * Setup a timer to calculate time spent
-    * working at the end.
-    *
-    */
-    time_t start = time(NULL);
-
-    /**
-    *
     * Length and memory sizeof all input/output,
     * and host/device arrays.
     *
     */
-    time_t start_mem_alloc = time(NULL);
     const int ARRAY_LENGTH = 1 << 26;
     const int ARRAY_MEM_SIZE = sizeof(float) * ARRAY_LENGTH;
     // Initialize host (CPU) arrays
@@ -106,7 +97,6 @@ int main(void)
     float *device_input_a = create_device_float_array(ARRAY_LENGTH);
     float *device_input_b = create_device_float_array(ARRAY_LENGTH);
     float *device_output = create_device_float_array(ARRAY_LENGTH);
-    fprintf(stdout, "Took %llds to allocate %d bytes of memory\n", time(NULL) - start_mem_alloc, ARRAY_MEM_SIZE * 6);
 
     /**
     *
@@ -115,23 +105,19 @@ int main(void)
     * gives the float, 3.0F.
     *
     */
-    time_t start_array_fill = time(NULL);
     for (int idx = 0; idx < ARRAY_LENGTH; idx++)
     {
         host_input_a[idx] = 1.0f;
         host_input_b[idx] = 2.0f;
     }
-    fprintf(stdout, "Took %llds to fill host input arrays\n", time(NULL) - start_array_fill);
 
     /**
     *
     * Copy host input arrays into device memory.
     *
     */
-    time_t start_mem_copy_h2d = time(NULL);
     copy_mem_host_to_device(host_input_a, device_input_a, ARRAY_MEM_SIZE);
     copy_mem_host_to_device(host_input_b, device_input_b, ARRAY_MEM_SIZE);
-    fprintf(stdout, "Took %llds to copy host inputs into device\n", time(NULL) - start_mem_copy_h2d);
 
     /**
     *
@@ -139,8 +125,7 @@ int main(void)
     * with the copied (and now available) inputs.
     *
     */
-    time_t start_device_func = time(NULL);
-    const int block_size = 1024;
+    const int block_size = 256;
     const int grid_size = (ARRAY_LENGTH + block_size - 1) / block_size;
     add_floats_of_length<<<grid_size, block_size>>>(device_input_a, device_input_b, device_output, ARRAY_LENGTH);
     cudaError_t err = cudaGetLastError();
@@ -149,16 +134,13 @@ int main(void)
         fprintf(stderr, "Failed to perform device calculation; CUDA error code: %s; exiting...\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
-    fprintf(stdout, "Took %llds to perform %d operations [%d][%d]\n", time(NULL) - start_device_func, grid_size * block_size, grid_size, block_size);
 
     /**
     *
     * Copy device output to host output.
     *
     */
-    time_t start_mem_copy_d2h = time(NULL);
     copy_mem_device_to_host(device_output, host_output, ARRAY_MEM_SIZE);
-    fprintf(stdout, "Took %llds to copy device output into host\n", time(NULL) - start_mem_copy_d2h);
 
     /**
     *
@@ -170,7 +152,7 @@ int main(void)
     for (int idx = 0; idx < ARRAY_LENGTH; idx++)
         maxError = fmax(maxError, fabs(host_output[idx] - 3.0F));
 
-    printf("--- END ---\nTotal time elpased: %llds\nMax float computation error: %f\n--- END ---\n", time(NULL) - start, maxError);
+    printf("--- END ---\nMax float computation error: %f\n--- END ---\n", maxError);
 
     delete_device_memory(device_input_a);
     delete_device_memory(device_input_b);
