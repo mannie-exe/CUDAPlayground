@@ -11,7 +11,6 @@ float *create_host_float_array(const int LENGTH)
     {
         fprintf(stderr, "Failed to allocate array of floats on the host (CPU) with length %d and size %d; exiting...\n", LENGTH, MEM_SIZE);
         exit(EXIT_FAILURE);
-
     }
     return array;
 }
@@ -70,8 +69,7 @@ void delete_device_memory(void *memory)
 * Note: __global__ makes this a kernel function.
 *
 */
-__global__
-void add_floats_of_length(float *dest, float *src_a, float *src_b, const int LENGTH)
+__global__ void add_floats_of_length(float *dest, float *src_a, float *src_b, const int LENGTH)
 {
     const int block_offset = blockDim.x * gridDim.x;
     const int thread_offset = blockIdx.x * blockDim.x + threadIdx.x;
